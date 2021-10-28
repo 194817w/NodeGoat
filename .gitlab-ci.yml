@@ -1,0 +1,97 @@
+include:
+  - template: Security/SAST.gitlab-ci.yml
+  - template: Security/Secret-Detection.gitlab-ci.yml
+  - template: Code-Quality.gitlab-ci.yml
+  # # GitLab Ultimate Only
+  - template: Dependency-Scanning.gitlab-ci.yml
+  - template: Security/License-Scanning.gitlab-ci.yml
+  - template: DAST.gitlab-ci.yml
+  - template: Container-Scanning.gitlab-ci.yml
+
+services: # use services to link the nodegoat container to the dast job
+  - name: mongo:latest
+    alias: mongo
+  - name: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+    alias: nodegoat
+
+variables:
+  ### Dependency Scannig Variables
+  # DS_DEFAULT_ANALYZERS: "gemnasium"
+  DS_DEFAULT_ANALYZERS: "retire.js"
+
+  ### DAST Variables
+  FF_NETWORK_PER_BUILD: "true" # enable network per build so all services can communicate on the same network
+  DAST_FULL_SCAN_ENABLED: "true" # do a full scan
+  DAST_ZAP_USE_AJAX_SPIDER: "true" # use the ajax spider
+  DAST_WEBSITE: "http://nodegoat:4000/" # set the target website
+  DAST_AUTH_URL: "http://nodegoat:4000/login" # set the target authentication URL
+  # Use CI/CD variables to protect the password (Settings -> CI/CD -> Variables)
+  DAST_USERNAME: $GOAT_USERNAME  
+  DAST_PASSWORD: $GOAT_PASSWORD
+  # Find the username and password fields in the /login page
+  DAST_USERNAME_FIELD: "userName"
+  DAST_PASSWORD_FIELD: "password"
+
+  # Container Scanning Variables
+  CS_MAJOR_VERSION: "4"
+  GIT_STRATEGY: fetch
+  DOCKER_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+
+  SAST_EXCLUDED_ANALYZERS: "eslint, semgrep"
+
+stages: 
+  - build
+  - test
+  - dast
+  - deploy
+
+unitTesting:
+    image: node:latest
+    cache: 
+      paths:
+        - node_modules/
+    before_script:
+      - npm ci
+    stage: test
+    script: 
+      - npm run test
+
+secret_detection:
+  variables:
+    SECRET_DETECTION_HISTORIC_SCAN: "true"
+
+build_and_deploy_container_image:
+  services:
+  - name: docker:dind
+    alias: dind
+  image: docker:19.03.5
+  stage: build
+  before_script:
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+  script:
+    - docker pull $CI_REGISTRY_IMAGE:latest || true
+    - docker build --cache-from $CI_REGISTRY_IMAGE:latest --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA --tag $CI_REGISTRY_IMAGE:latest .
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+    - docker push $CI_REGISTRY_IMAGE:latest
+  after_script:
+    - docker logout registry.gitlab.com
+
+# container_scanning:
+#   variables:
+#     DOCKER_IMAGE: $CI_REGISTRY_IMAGE:latest
+#     CLAIR_TRACE: "true"
+
+dast:
+  # Register the user first, note this assumes the application is up and running for registration to succeed
+  before_script: 
+    - curl -v -d 'userName=$GOAT_USERNAME&firstName=test&lastName=test&password=$GOAT_PASSWORD&verify=$GOAT_PASSWORD&email=&_csrf=' "http://nodegoat:4000/signup"
+
+deploy:
+  stage: deploy
+  script:
+    - echo "Deploy to production server"
+  environment:
+    name: production
+    url: https://prod.example.com
+  when: manual
+  
