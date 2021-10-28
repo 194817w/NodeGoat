@@ -44,33 +44,9 @@ stages:
   - dast
   - deploy
 
-unitTesting:
-    image: node:latest
-    cache: 
-      paths:
-        - node_modules/
-    before_script:
-      - npm ci
-    stage: test
-    script: 
-      - npm run test
 
 
-build_and_deploy_container_image:
-  services:
-  - name: docker:dind
-    alias: dind
-  image: docker:19.03.5
-  stage: build
-  before_script:
-    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
-  script:
-    - docker pull $CI_REGISTRY_IMAGE:latest || true
-    - docker build --cache-from $CI_REGISTRY_IMAGE:latest --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA --tag $CI_REGISTRY_IMAGE:latest .
-    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
-    - docker push $CI_REGISTRY_IMAGE:latest
-  after_script:
-    - docker logout registry.gitlab.com
+
 
 # container_scanning:
 #   variables:
