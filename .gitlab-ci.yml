@@ -5,11 +5,6 @@ include:
   - template: DAST.gitlab-ci.yml
   
 
-services: # use services to link the nodegoat container to the dast job
-  - name: mongo:latest
-    alias: mongo
-  - name: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
-    alias: nodegoat
 
 
 stages: 
