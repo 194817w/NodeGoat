@@ -1,0 +1,8 @@
+[eslint]
+  [[eslint.ruleset]]
+    disable = true
+    [eslint.ruleset.identifier]
+      type = "eslint_rule_id"
+      value = "security/detect-child-process"
+
+  
