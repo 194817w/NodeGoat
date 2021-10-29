@@ -11,31 +11,6 @@ services: # use services to link the nodegoat container to the dast job
   - name: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
     alias: nodegoat
 
-variables:
-  ### Dependency Scannig Variables
-  # DS_DEFAULT_ANALYZERS: "gemnasium"
-  DS_DEFAULT_ANALYZERS: "retire.js"
-
-
-  ### DAST Variables
-  FF_NETWORK_PER_BUILD: "true" # enable network per build so all services can communicate on the same network
-  DAST_FULL_SCAN_ENABLED: "true" # do a full scan
-  DAST_ZAP_USE_AJAX_SPIDER: "true" # use the ajax spider
-  DAST_WEBSITE: "http://nodegoat:4000/" # set the target website
-  DAST_AUTH_URL: "http://nodegoat:4000/login" # set the target authentication URL
-  # Use CI/CD variables to protect the password (Settings -> CI/CD -> Variables)
-  DAST_USERNAME: $GOAT_USERNAME  
-  DAST_PASSWORD: $GOAT_PASSWORD
-  # Find the username and password fields in the /login page
-  DAST_USERNAME_FIELD: "userName"
-  DAST_PASSWORD_FIELD: "password"
-
-  # Container Scanning Variables
-  CS_MAJOR_VERSION: "4"
-  GIT_STRATEGY: fetch
-  DOCKER_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
-
-  SAST_EXCLUDED_ANALYZERS: "eslint, semgrep"
 
 stages: 
   - build
@@ -56,7 +31,7 @@ stages:
 sast:
   stage: test
   variables:
-    SAST_DEFAULT_ANALYZERS: "spotbugs"
+    SAST_DEFAULT_ANALYZERS: "nodejs-scan, eslint"
   #allow_failure: false
   script: |
     - if: $CI_MERGE_REQUEST_IID
