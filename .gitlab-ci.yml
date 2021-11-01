@@ -1,5 +1,5 @@
 include:
-  
+  - template: Security/SAST.gitlab-ci.yml
   
   # # GitLab Ultimate Only
   - template: DAST.gitlab-ci.yml
@@ -23,6 +23,18 @@ stages:
 #     DOCKER_IMAGE: $CI_REGISTRY_IMAGE:latest
 #     CLAIR_TRACE: "true"
 
+sast:
+  stage: test
+  variables:
+    SAST_DEFAULT_ANALYZERS: "nodejs-scan, eslint, semgrep"
+  #allow_failure: false
+  script: |
+    - if: $CI_MERGE_REQUEST_IID
+    - if: $CI_COMMIT_BRANCH == "master"
+  artifacts:
+      paths: [gl-sast-report.json]
+      reports:
+        sast: gl-sast-report.json
 
   
 
@@ -33,6 +45,29 @@ dast:
     - curl -v -d 'userName=$GOAT_USERNAME&firstName=test&lastName=test&password=$GOAT_PASSWORD&verify=$GOAT_PASSWORD&email=&_csrf=' "http://nodegoat:4000/signup"
 
 
+
+sast_verification:
+  stage: verify
+  rules:
+    - if: $CI_COMMIT_BRANCH == "master"
+    - if: $CI_MERGE_REQUEST_IID
+  artifacts:
+    paths: [gl-sast-report.json]
+    reports:
+      sast: gl-sast-report.json
+  script: |
+    cat gl-sast-report.json 
+    
+    
+    grep -EIho 'Critical|High|Medium|Low|Info|Unknown' gl-sast-report.json  |sort|uniq -c
+    
+
+    if grep -c 'Critical\|High\|Medium\|Low\|Info\|Unknown'  'gl-sast-report.json';
+    then
+      echo "Aborts due to security issues."; exit 1
+    else
+      echo "🙂 all good! Your source code looks amazing";
+    fi
 
 
 
