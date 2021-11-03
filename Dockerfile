@@ -3,6 +3,9 @@ ENV WORKDIR /usr/src/app/
 WORKDIR $WORKDIR
 COPY package*.json $WORKDIR
 RUN npm install --production --no-cache
+COPY entrypoint.sh /usr/local/bin/
+RUN ["chmod", "+x","/usr/local/bin/entrypoint.sh"]
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
 FROM node:12-alpine
 ENV USER node
