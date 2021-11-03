@@ -5,6 +5,7 @@ include:
 
 stages:
   - build
+  - test
   - dast
 
 
@@ -28,6 +29,19 @@ variables:
    # Find the username and password fields in the /login page
    DAST_USERNAME_FIELD: "userName"
    DAST_PASSWORD_FIELD: "password"
+
+
+unitTesting:
+    image: node:latest
+    cache: 
+      paths:
+        - node_modules/
+    before_script:
+      - npm ci
+    stage: test
+    script: 
+      - npm run test
+
 
 build_and_deploy_container_image:
       services:
