@@ -3,9 +3,7 @@ ENV WORKDIR /usr/src/app/
 WORKDIR $WORKDIR
 COPY package*.json $WORKDIR
 RUN npm install --production --no-cache
-COPY entrypoint.sh /usr/local/bin/
-RUN ["chmod", "+x","/usr/local/bin/entrypoint.sh"]
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+
 
 FROM node:12-alpine
 ENV USER node
@@ -19,3 +17,7 @@ COPY --chown=node . $WORKDIR
 # Then all further actions including running the containers should be done under non-root user.
 USER $USER
 EXPOSE 4000
+
+COPY entrypoint.sh /usr/local/bin/
+RUN ["chmod", "+x","/usr/local/bin/entrypoint.sh"]
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
