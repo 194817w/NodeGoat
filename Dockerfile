@@ -19,6 +19,6 @@ COPY --chown=node . $WORKDIR
 EXPOSE 4000
 
 COPY entrypoint.sh /usr/local/bin/
-RUN ["sh", "chmod", "+x","/usr/local/bin/entrypoint.sh"]
+RUN ["chmod", "+x","/usr/local/bin/entrypoint.sh"]
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
