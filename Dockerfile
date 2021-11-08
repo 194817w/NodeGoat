@@ -3,6 +3,7 @@ ENV WORKDIR /usr/src/app/
 WORKDIR $WORKDIR
 COPY package*.json $WORKDIR
 RUN npm install --production --no-cache
+RUN CGO_ENABLED=0 go build
 
 
 FROM node:12-alpine
@@ -14,11 +15,12 @@ RUN chown $USER:$USER $WORKDIR
 COPY --chown=node . $WORKDIR
 # In production environment uncomment the next line
 #RUN chown -R $USER:$USER /home/$USER && chmod -R g-s,o-rx /home/$USER && chmod -R o-wrx $WORKDIR
+RUN CGO_ENABLED=0 go build
 
 
 EXPOSE 4000
 
 COPY entrypoint.sh /usr/local/bin/
 RUN ["chmod", "+x","/usr/local/bin/entrypoint.sh"]
-ENTRYPOINT ["/bin/sh", "/usr/local/bin/entrypoint.sh"]
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
