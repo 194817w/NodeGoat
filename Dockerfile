@@ -20,8 +20,9 @@ COPY --chown=node . $WORKDIR
 
 EXPOSE 4000
 
+RUN export CGO_ENABLED=0 && go build
+
 COPY entrypoint.sh /usr/local/bin/
-RUN CGO_ENABLED=0 go build
 RUN ["chmod", "+x","/usr/local/bin/entrypoint.sh"]
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
